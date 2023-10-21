@@ -1,10 +1,10 @@
-### Hi there 👋
+ Hi there 👋
 
 
 
-### Jestem Kamil
+ Jestem Kamil
 
-### 🔭 Obecnie próbuję coś zrobić :)
-### 🌱 Uczę się Pythona.
-### 💬 Możesz mnie zapytać o co chcesz, tylko czy odpowiedź ci będzie pasować to już inna rzecz.
-### ⚡ Fun fact: Brak
+ 🔭 Obecnie próbuję coś zrobić :)
+ 🌱 Uczę się Pythona.
+ 💬 Możesz mnie zapytać o co chcesz, tylko czy odpowiedź ci będzie pasować to już inna rzecz.
+ ⚡ Fun fact: Brak
