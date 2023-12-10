@@ -1,0 +1,55 @@
+from flask import Flask, jsonify
+import json
+import time
+import os
+
+app = Flask(__name__)
+
+@app.route('/popular_names', methods=['GET'])
+def get_popular_hispanic_names():
+    start_time = time.time()  # Start pomiaru czasu
+
+    try:
+        file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'imiona.json')
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+            hispanic_names = [record[11] for record in data.get('data', []) if record[10] == 'HISPANIC']
+
+            searched_name = "Julian"
+            found = any(name.lower() == searched_name.lower() for name in hispanic_names)
+            lines_with_name = sum(1 for name in hispanic_names if name.lower() == searched_name.lower())
+
+            end_time = time.time()  # Koniec pomiaru czasu
+            execution_time = end_time - start_time  # Oblicza czas wykonania
+
+            lines_of_code = count_lines_of_code(__file__)  # Zlicza ilość linii kodu w bieżącym pliku
+
+            # Tworzy HTML z wynikami zliczania linii z imieniem Julian z atrybutem 'HISPANIC'
+            html_response = f'''
+                <h1>Wyniki wyszukiwania imienia Julian wśród imion z atrybutem 'HISPANIC'</h1>
+                <p>Wyszukiwane imię: {searched_name}</p>
+                <p>Znaleziono imię? {found}</p>
+                <p>Czas wykonania wyszukiwania: {execution_time} sekund</p>
+                <p>Liczba linii kodu z imieniem Julian: {lines_with_name}</p>
+                <p>Liczba linii kodu wyników wyszukiwania: {lines_of_code}</p>
+            '''
+
+            return html_response
+    except FileNotFoundError:
+        return jsonify({"error": "Plik imiona.json nie istnieje"}), 404
+    except json.JSONDecodeError:
+        return jsonify({"error": "Nieprawidłowy format pliku JSON"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Wystąpił błąd: {str(e)}"}), 500
+
+# Funkcja do zliczania liczby linii kodu
+def count_lines_of_code(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+            return len(lines)
+    except FileNotFoundError:
+        return 0
+
+if __name__ == '__main__':
+    app.run(debug=True)

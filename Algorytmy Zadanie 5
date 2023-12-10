@@ -1,0 +1,47 @@
+from flask import Flask, jsonify
+import json
+import time
+import os
+
+app = Flask(__name__)
+
+# Endpoint do wyświetlania listy unikalnych imion dzieci
+@app.route('/popular_names', methods=['GET'])
+def get_popular_names():
+    start_time = time.time()  # Start pomiaru czasu
+
+    try:
+        file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'imiona.json')
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+            all_names = [record[11] for record in data.get('data', [])]  # Lista imion dzieci z atrybutu 'data'
+            unique_names = list(set(all_names))  # Usunięcie powtórzeń z listy imion
+
+            julian_count = all_names.count("Julian")  # Liczy całkowitą liczbę wystąpień imienia "Julian"
+            unique_julian_count = unique_names.count("Julian")  # Liczy liczbę wystąpień imienia "Julian" na liście unikalnych imion
+
+            end_time = time.time()  # Koniec pomiaru czasu
+            execution_time = end_time - start_time  # Oblicza czas wykonania
+
+            # Tworzy HTML z listą unikalnych imion dzieci, liczbą wystąpień imienia "Julian" i czasem wykonania
+            html_response = f'''
+                <h1>Wyniki wyszukiwania: Lista unikalnych imion dzieci</h1>
+                <p>Liczba unikalnych imion: {len(unique_names)}</p>
+                <p>Liczba wystąpień imienia Julian: {unique_julian_count}</p>
+                <p>Czas wykonania: {execution_time:.6f} sekund</p>
+                <p>Lista unikalnych imion:</p>
+            '''
+
+            for name in unique_names:
+                html_response += f'<p>{name}</p>'  # Dodaje każde unikalne imię do listy w formacie HTML
+
+            return html_response
+    except FileNotFoundError:
+        return jsonify({"error": "Plik nie istnieje"}), 404
+    except json.JSONDecodeError:
+        return jsonify({"error": "Nieprawidłowy format pliku JSON"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Wystąpił błąd: {str(e)}"}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)

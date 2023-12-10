@@ -1,0 +1,60 @@
+from flask import Flask, jsonify
+import json
+import time
+import os
+
+app = Flask(__name__)
+
+@app.route('/popular_names', methods=['GET'])
+def get_popular_names():
+    start_time = time.time()  # Start pomiaru czasu
+
+    try:
+        file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'imiona.json')
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+            popular_names_list = data.get('data', [])  # Wczytuje dane zawierające imiona dzieci z atrybutu 'data'
+
+            searched_name = "Julian"
+            found = False
+            lines_with_name = 0  # Licznik linii z imieniem "Julian"
+            for record in popular_names_list:
+                if record[11].lower() == searched_name.lower():  # Sprawdza imię w odpowiednim indeksie w rekordzie
+                    found = True
+                    lines_with_name += 1
+
+            end_time = time.time()  # Koniec pomiaru czasu
+            execution_time = end_time - start_time  # Oblicza czas wykonania
+
+            lines_of_code = count_lines_of_code_with_name(__file__, searched_name)  # Zlicza ilość linii kodu z imieniem Julian
+
+            # Tworzy HTML z wynikami wyszukiwania imienia Julian
+            html_response = f'''
+                <h1>Wyniki wyszukiwania imienia Julian</h1>
+                <p>Wyszukiwane imię: {searched_name}</p>
+                <p>Znaleziono imię? {found}</p>
+                <p>Czas wykonania wyszukiwania: {execution_time} sekund</p>
+                <p>Liczba linii kodu z imieniem Julian: {lines_with_name}</p>
+                <p>Liczba linii kodu wyników wyszukiwania: {lines_of_code}</p>
+            '''
+
+            return html_response
+    except FileNotFoundError:
+        return jsonify({"error": "Plik imiona.json nie istnieje"}), 404
+    except json.JSONDecodeError:
+        return jsonify({"error": "Nieprawidłowy format pliku JSON"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Wystąpił błąd: {str(e)}"}), 500
+
+# Funkcja do zliczania liczby linii kodu z imieniem "Julian"
+def count_lines_of_code_with_name(file_path, searched_name):
+    try:
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+            lines_with_name = sum(1 for line in lines if searched_name.lower() in line.lower())
+            return lines_with_name
+    except FileNotFoundError:
+        return 0
+
+if __name__ == '__main__':
+    app.run(debug=True)

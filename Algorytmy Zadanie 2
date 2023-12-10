@@ -1,0 +1,34 @@
+from flask import Flask, jsonify
+import json
+import time
+import os
+
+app = Flask(__name__)
+
+# Endpoint do wyświetlania listy imion dzieci
+@app.route('/popular_names', methods=['GET'])
+def get_popular_names():
+    try:
+        file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'imiona.json')
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+            popular_names_list = [record[11] for record in data.get('data', [])]  # Lista imion dzieci z atrybutu 'data'
+            list_name = "<br>".join(popular_names_list)  # Tworzy listę imion, gdzie każde imię znajduje się w osobnej linii HTML
+
+            # Tworzy HTML z listą imion dzieci
+            html_response = f'''
+                <h1>Wyniki wyszukiwania: Lista imion dzieci</h1>
+                <p>Lista imion:</p>
+                <p>{list_name}</p>
+            '''
+
+            return html_response
+    except FileNotFoundError:
+        return jsonify({"error": "Plik nie istnieje"}), 404
+    except json.JSONDecodeError:
+        return jsonify({"error": "Nieprawidłowy format pliku JSON"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Wystąpił błąd: {str(e)}"}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
