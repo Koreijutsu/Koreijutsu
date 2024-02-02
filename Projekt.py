@@ -1,57 +1,51 @@
 from flask import Flask, request, render_template_string
 from PIL import Image
 import os
-import base64
 import smtplib
 from email.message import EmailMessage
-import magic
+from stegano import lsb
 
 app = Flask(__name__)
+
+# Konfiguracja loggera
+import logging
+from logging.handlers import RotatingFileHandler
+
+# Ustawienie poziomu logowania dla konsoli
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+app.logger.addHandler(console_handler)
+
+# Ustawienia dla zapisu do pliku
+handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=1)
+handler.setLevel(logging.INFO)
+app.logger.addHandler(handler)
 
 # Funkcja do ukrywania danych w obrazie za pomocą steganografii
 def hide_data_in_image(image_path, data_to_hide, password):
     try:
         app.logger.info(f"Ukrywanie danych w obrazie {image_path}")
 
-        # Sprawdzenie typu pliku za pomocą magic
-        mime = magic.Magic()
-        file_type = mime.from_file(image_path)
-
         # Sprawdzenie, czy plik jest obrazem
-        if not file_type.startswith('image'):
-            app.logger.error(f"Plik '{image_path}' nie jest obrazem")
-            raise ValueError(f"Plik '{image_path}' nie jest obrazem")
-
         try:
-            with open(image_path, "rb") as f:
-                img = Image.open(f)
+            img = Image.open(image_path)
         except Exception as e:
-            app.logger.error(f"Błąd podczas otwierania obrazu: {str(e)}")
-            raise ValueError(f"Błąd podczas otwierania obrazu: {str(e)}")
+            error_msg = f"Błąd podczas otwierania obrazu '{image_path}': {str(e)}"
+            app.logger.error(error_msg)
+            raise ValueError(error_msg)
 
-        # Kodowanie danych do formatu base64
-        encoded_data = base64.b64encode(data_to_hide.encode())
-
-        # Modyfikacja wartości pikseli w obrazie w celu osadzenia zaszyfrowanych danych
-        img_data = img.getdata()
-        img_new_data = []
-        for i, pixel in enumerate(img_data):
-            if i < len(encoded_data):
-                img_new_data.append((pixel[0], pixel[1], pixel[2], encoded_data[i]))
-            else:
-                img_new_data.append(pixel)
-
-        # Zapisanie zaktualizowanego obrazu
+        # Ukrycie danych w obrazie
+        secret_img = lsb.hide(img, data_to_hide)
         img_with_hidden_data = "hidden_" + os.path.basename(image_path)
-        img.putdata(img_new_data)
-        img.save(img_with_hidden_data)
+        secret_img.save(img_with_hidden_data)
 
         app.logger.info(f"Ukrywanie danych w obrazie zakończone. Nowy obraz zapisany jako {img_with_hidden_data}")
 
         return img_with_hidden_data
     except Exception as e:
-        app.logger.error(f"Błąd podczas ukrywania danych w obrazie: {str(e)}")
-        raise ValueError(f"Błąd podczas ukrywania danych w obrazie: {str(e)}")
+        error_msg = f"Błąd podczas ukrywania danych w obrazie: {str(e)}"
+        app.logger.error(error_msg)
+        raise ValueError(error_msg)
 
 # Funkcja do wysyłania e-maila
 def send_email(sender_email, receiver_email, password, subject, body, attachment_path):
@@ -79,8 +73,9 @@ def send_email(sender_email, receiver_email, password, subject, body, attachment
         app.logger.info("Wysyłanie e-maila zakończone sukcesem")
 
     except Exception as e:
-        app.logger.error(f"Błąd podczas wysyłania e-maila: {str(e)}")
-        raise ValueError(f"Błąd podczas wysyłania e-maila: {str(e)}")
+        error_msg = f"Błąd podczas wysyłania e-maila: {str(e)}"
+        app.logger.error(error_msg)
+        raise ValueError(error_msg)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -88,68 +83,39 @@ def index():
         try:
             app.logger.info("Przetwarzanie żądania POST")
 
-            data_type = request.form['data_type']
+            # Odczyt danych z formularza
             password = request.form['password']
             sender_email = request.form['sender_email']
             receiver_email = request.form['receiver_email']
             email_password = request.form['email_password']
-
-            # Sprawdzenie, czy pola e-mail nie są puste
-            if not sender_email or not receiver_email or not email_password:
-                app.logger.error("Błąd: Puste pola e-mail")
-                return {"error": "Uzupełnij pola e-mail"}
-
-            if data_type == 'choose':
-                app.logger.error("Błąd: Nie wybrano rodzaju danych do ukrycia")
-                return {"error": "Wybierz rodzaj danych do ukrycia"}
-
             text_to_hide = request.form.get('text_to_hide', '')
-            text_file = request.files.get('text_file')
-            image = request.files.get('image')
-            image_from_file = request.files.get('image_from_file')
-
-            # Zapisanie pliku tymczasowego
-            if text_file:
-                text_file_path = "temp_file.txt"
-                text_file.save(text_file_path)
-                data_to_hide = open(text_file_path, 'rb').read()
-            elif image_from_file:
-                image_from_file_path = "temp_image_from_file.png"
-                image_from_file.save(image_from_file_path)
-                data_to_hide = image_from_file_path
-            else:
-                data_to_hide = text_to_hide
 
             # Sprawdzenie, czy obraz został dostarczony
-            if 'image' in request.files:
-                image = request.files['image']
-            if image:
-
-                image_path = "temp_image.png"
-                image.save(image_path)
-            else:
+            image = request.files.get('image')
+            if not image:
                 app.logger.error("Błąd: Brak obrazu w formularzu")
                 return {"error": "Wybierz obraz przed przesłaniem formularza"}
 
-            zaszyfrowany_obraz = hide_data_in_image(image_path, data_to_hide, password)
+            # Ukrycie danych w obrazie
+            try:
+                img_with_hidden_data = hide_data_in_image(image, text_to_hide, password)
+            except Exception as e:
+                return {"error": f"Błąd podczas ukrywania danych w obrazie: {str(e)}"}
 
-            if text_file:
-                os.remove(text_file_path)
-            elif image_from_file:
-                os.remove(image_from_file_path)
+            # Wysłanie e-maila
+            try:
+                send_email(sender_email, receiver_email, email_password, 'Obraz z ukrytym tekstem', 'Obraz zawierający ukryty tekst.', img_with_hidden_data)
+            except Exception as e:
+                return {"error": f"Błąd podczas wysyłania e-maila: {str(e)}"}
 
-            if image:
-                os.remove(image_path)
-
-            send_email(sender_email, receiver_email, email_password, 'Obraz z ukrytym tekstem', 'Obraz zawierający ukryty tekst.', zaszyfrowany_obraz)
-            
             app.logger.info("Przetwarzanie żądania POST zakończone sukcesem")
 
             return {"message": "E-mail został wysłany z sukcesem!"}
 
         except Exception as e:
-            app.logger.error(f"Błąd podczas przetwarzania żądania POST: {str(e)}")
-            return {"error": str(e)}
+            error_msg = f"Błąd podczas przetwarzania żądania POST: {str(e)}"
+            app.logger.error(error_msg)
+            return {"error": error_msg}
     else:
         html = '''
         <!DOCTYPE html>
@@ -209,7 +175,7 @@ def index():
                 Hasło: <input type="password" name="password"><br>
 
                 <div id="image_field" style="display:none;">
-                    Wybierz obrazek .png: <input type="file" name="image"><br>
+                    Wybierz obrazek .png: <input type="file" name="image" required><br>
                 </div>
 
                 Twój mail: <input type="text" name="sender_email"><br>
