@@ -1,8 +1,7 @@
 from flask import Flask, request, render_template_string
 from PIL import Image
 import os
-import smtplib
-from email.message import EmailMessage
+from flask_mail import Mail, Message
 from stegano import lsb
 
 app = Flask(__name__)
@@ -21,22 +20,29 @@ handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=1)
 handler.setLevel(logging.INFO)
 app.logger.addHandler(handler)
 
+# Konfiguracja Flask-Mail
+mail = Mail(app)
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+
 # Funkcja do ukrywania danych w obrazie za pomocą steganografii
-def hide_data_in_image(image_path, data_to_hide, password):
+def hide_data_in_image(image_file, data_to_hide, password):
     try:
-        app.logger.info(f"Ukrywanie danych w obrazie {image_path}")
+        app.logger.info("Ukrywanie danych w obrazie")
 
         # Sprawdzenie, czy plik jest obrazem
         try:
-            img = Image.open(image_path)
+            img = Image.open(image_file)
         except Exception as e:
-            error_msg = f"Błąd podczas otwierania obrazu '{image_path}': {str(e)}"
+            error_msg = f"Błąd podczas otwierania obrazu: {str(e)}"
             app.logger.error(error_msg)
             raise ValueError(error_msg)
 
         # Ukrycie danych w obrazie
         secret_img = lsb.hide(img, data_to_hide)
-        img_with_hidden_data = "hidden_" + os.path.basename(image_path)
+        img_with_hidden_data = "hidden_" + os.path.basename(image_file.filename)
         secret_img.save(img_with_hidden_data)
 
         app.logger.info(f"Ukrywanie danych w obrazie zakończone. Nowy obraz zapisany jako {img_with_hidden_data}")
@@ -47,28 +53,19 @@ def hide_data_in_image(image_path, data_to_hide, password):
         app.logger.error(error_msg)
         raise ValueError(error_msg)
 
-# Funkcja do wysyłania e-maila
-def send_email(sender_email, receiver_email, password, subject, body, attachment_path):
+# Funkcja do wysyłania e-maila z użyciem Flask-Mail
+def send_email(sender_email, receiver_email, subject, body, attachment_path, app, mail):
     try:
         app.logger.info("Rozpoczynanie wysyłania e-maila")
-        
-        msg = EmailMessage()
-        msg['Subject'] = subject
-        msg['From'] = sender_email
-        msg['To'] = receiver_email
 
-        # Ustawienie treści wiadomości
-        msg.set_content(body)
+        msg = Message(subject, sender=sender_email, recipients=[receiver_email])
+        msg.body = body
 
         if attachment_path is not None:
-            with open(attachment_path, 'rb') as f:
-                file_data = f.read()
-                # Dodanie załącznika
-                msg.add_attachment(file_data, maintype='application', subtype='octet-stream', filename=os.path.basename(attachment_path))
+            with app.open_resource(attachment_path) as attachment:
+                msg.attach(os.path.basename(attachment_path), "application/octet-stream", attachment.read())
 
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-            smtp.login(sender_email, password)
-            smtp.send_message(msg)
+        mail.send(msg)
 
         app.logger.info("Wysyłanie e-maila zakończone sukcesem")
 
@@ -96,6 +93,10 @@ def index():
                 app.logger.error("Błąd: Brak obrazu w formularzu")
                 return {"error": "Wybierz obraz przed przesłaniem formularza"}
 
+            # Konfiguracja Flask-Mail wewnątrz kontekstu żądania HTTP
+            app.config['MAIL_USERNAME'] = sender_email  # Ustawiamy na podstawie danych z formularza
+            app.config['MAIL_PASSWORD'] = email_password  # Ustawiamy na podstawie danych z formularza
+
             # Ukrycie danych w obrazie
             try:
                 img_with_hidden_data = hide_data_in_image(image, text_to_hide, password)
@@ -104,7 +105,7 @@ def index():
 
             # Wysłanie e-maila
             try:
-                send_email(sender_email, receiver_email, email_password, 'Obraz z ukrytym tekstem', 'Obraz zawierający ukryty tekst.', img_with_hidden_data)
+                send_email(sender_email, receiver_email, 'Obraz z ukrytym tekstem', 'Obraz zawierający ukryty tekst.', img_with_hidden_data, app, mail)
             except Exception as e:
                 return {"error": f"Błąd podczas wysyłania e-maila: {str(e)}"}
 
@@ -121,7 +122,7 @@ def index():
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Wybór pliku obrazu</title>
+            <title>Wypełnij formularz, aby wysłać plik</title>
             <script>
                 function showHideFields() {
                     var selectedValue = document.getElementById("data_type").value;
@@ -145,7 +146,7 @@ def index():
                         textToHideField.style.display = "none";
                         textFileField.style.display = "none";
                         imageField.style.display = "block";
-                    } else {  // Dodałem obsługę opcji "Wybierz"
+                    } else { "Wybierz"
                         textToHideField.style.display = "none";
                         textFileField.style.display = "none";
                         imageField.style.display = "none";
