@@ -1,0 +1,109 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\author{Kamil Baraniok}
+\title{Algorytmy hashowania}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Omówienie problemu}
+W dzisiejszym cyfrowym świecie, gdzie przechowujemy i przetwarzamy ogromne ilości danych, zagadnienie bezpieczeństwa staje się coraz bardziej palącym problemem. Jednym z kluczowych aspektów bezpieczeństwa danych jest zapewnienie integralności i poufności informacji, zwłaszcza w przypadku danych wrażliwych, takich jak hasła czy informacje finansowe.
+
+Algorytmy hashowania stanowią podstawową metodę zabezpieczania danych poprzez przekształcenie ich na wartości o stałej długości, zwane haszami. Istotą tego procesu jest generowanie unikalnego skrótu dla każdego zestawu danych wejściowych. Dzięki temu, nawet niewielka zmiana danych wejściowych powoduje zupełnie inną wartość hasha, co zapewnia wykrywanie wszelkich modyfikacji danych.
+
+Niezawodność algorytmów haszujących jest kluczowa w wielu obszarach, od zabezpieczania haseł użytkowników w systemach autoryzacji po weryfikację integralności danych w transmisji sieciowej. Jednakże, w miarę jak technologia rozwija się, pojawiają się nowe wyzwania związane z bezpieczeństwem, takie jak ataki typu "collision" czy łamanie haseł metodami brute-force. Dlatego też istotne jest ciągłe monitorowanie i rozwój technik haszowania w celu zapewnienia skutecznej ochrony danych.
+
+\section{Omówienie algorytmów}
+Algorytmy hashowania różnią się między sobą zarówno pod względem budowy, jak i poziomu bezpieczeństwa, dlatego warto zrozumieć ich specyfikę i zastosowanie.
+
+\subsection{MD5 (Message-Digest Algorithm 5)}
+MD5 został opracowany przez Ronalda Rivesta w 1991 roku i pierwotnie miał służyć jako algorytm do sprawdzania integralności danych. Działa on poprzez dzielenie danych na bloki 512-bitowe i przeprowadzanie serii operacji logicznych na każdym z tych bloków, w wyniku czego generowany jest 128-bitowy skrót. Algorytm ten był szeroko stosowany w przeszłości do zabezpieczania haseł użytkowników oraz w procesie uwierzytelniania.
+
+Niestety, MD5 uznawany jest obecnie za przestarzały i podatny na wiele ataków, w tym na ataki typu "collision", które umożliwiają wygenerowanie dwóch różnych danych wejściowych generujących ten sam skrót. Ponadto, wydajność MD5 w łamaniu haseł metodami brute-force jest stosunkowo wysoka, co dodatkowo obniża jego przydatność w dzisiejszych aplikacjach wymagających wysokiego poziomu bezpieczeństwa.
+
+\subsection{SHA-1 (Secure Hash Algorithm 1)}
+SHA-1 został opracowany przez National Security Agency (NSA) w 1995 roku i jest często używany w aplikacjach internetowych do generowania unikalnych identyfikatorów oraz w procesach uwierzytelniania. Algorytm ten działa na podobnej zasadzie jak MD5, generując 160-bitowe skróty danych wejściowych.
+
+Jednakże, SHA-1 również jest uznawany za przestarzały i podatny na ataki. Już w 2017 roku eksperci z Google ogłosili pierwszą kolizję dla SHA-1, co potwierdziło jego niewystarczającą odporność na nowoczesne metody ataków. W rezultacie, zaleca się unikanie stosowania SHA-1 w nowych aplikacjach i migrację istniejących systemów na bardziej bezpieczne algorytmy, takie jak SHA-256.
+
+\subsection{SHA-256 (Secure Hash Algorithm 256)}
+SHA-256 jest częścią rodziny algorytmów Secure Hash Algorithm (SHA-2), które zostały opracowane jako następcy SHA-1. SHA-256 generuje 256-bitowe skróty danych wejściowych i jest szeroko stosowany w wielu aplikacjach, w tym w zabezpieczaniu transakcji finansowych, generowaniu sygnatur cyfrowych oraz w procesach uwierzytelniania.
+
+Budowa SHA-256 opiera się na zaawansowanych operacjach bitowych i przekształceniach logicznych, co zapewnia wysoki poziom bezpieczeństwa. Ponadto, SHA-256 jest uważany za odporny na większość znanych ataków kryptograficznych, co czyni go atrakcyjnym wyborem dla aplikacji wymagających bezpiecznego haszowania danych.
+
+\subsection{SHA-3 (Secure Hash Algorithm 3)}
+SHA-3 został opracowany przez National Institute of Standards and Technology (NIST) jako alternatywa dla SHA-2, z myślą o zwiększeniu odporności na ataki kryptograficzne. SHA-3 wykorzystuje zupełnie inne metody haszowania niż SHA-2, co czyni go bardziej elastycznym i odpornym na niektóre nowoczesne ataki.
+
+Jedną z głównych cech SHA-3 jest jego zdolność do generowania skrótów o różnych długościach, co umożliwia dostosowanie algorytmu do różnych wymagań aplikacyjnych. SHA-3 jest stosunkowo nowym algorytmem, ale zyskuje coraz większą popularność jako alternatywa dla starszych algorytmów haszowania.
+
+\subsection{B-Crypt}
+B-Crypt jest algorytmem haszowania, który został specjalnie zaprojektowany do przechowywania haseł w systemach informatycznych. Jego główną cechą jest możliwość regulowania liczby iteracji, co umożliwia dostosowanie poziomu bezpieczeństwa do wymagań aplikacji.
+
+B-Crypt jest często stosowany w aplikacjach webowych do zabezpieczania haseł użytkowników, ponieważ jego elastyczność pozwala na łatwe dostosowanie parametrów haszowania do zmieniających się wymagań bezpieczeństwa. Ponadto, B-Crypt jest uznawany za jedną z najbezpieczniejszych metod przechowywania haseł, co czyni go popularnym wyborem w aplikacjach wymagających wysokiego poziomu bezpieczeństwa.
+
+\section{Zastosowania}
+Algorytmy hashowania mają szerokie zastosowanie w dziedzinie informatyki, w tym:
+\begin{itemize}
+    \item Zabezpieczanie haseł użytkowników w systemach autoryzacji.
+    \item Weryfikacja integralności danych podczas transmisji.
+    \item Generowanie identyfikatorów i sygnatur cyfrowych.
+    \item Weryfikacja unikalności danych w bazach danych.
+\end{itemize}
+
+\section{Przykładowe implementacje}
+Przykładowa implementacja algorytmu SHA-256 w języku Python:
+\begin{verbatim}
+import hashlib
+
+def sha256_hash(data):
+    return hashlib.sha256(data.encode()).hexdigest()
+
+print(sha256_hash("ToJestMojeHaslo"))
+\end{verbatim}
+
+\section{Czas łamania}
+Czas łamania hasła zależy od wielu czynników, w tym od długości hasła, użytego algorytmu i mocy obliczeniowej atakującego. Poniżej przedstawiamy przybliżony czas łamania hasła dla różnych algorytmów w zależności od długości hasła:
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Długość hasła & MD5 & SHA-256 & B-Crypt \\
+\hline
+8 znaków & kilka minut & kilka godzin & kilka dni \\
+\hline
+12 znaków & kilka godzin & kilka dni & kilka miesięcy \\
+\hline
+16 znaków & kilka dni & kilka miesięcy & kilka lat \\
+\hline
+\end{tabular}
+\end{center}
+
+
+\section{Wpływ wybranych parametrów na bezpieczeństwo}
+W dziedzinie kryptografii istotne jest zrozumienie wpływu różnych parametrów na bezpieczeństwo systemów. Wybór odpowiedniego algorytmu haszującego oraz właściwych parametrów, takich jak długość hasła i liczba iteracji, może znacznie wpłynąć na odporność systemu na ataki.
+
+Długość hasła jest jednym z kluczowych parametrów, który determinuje jego trudność w złamaniu. Im dłuższe hasło, tym większa przestrzeń poszukiwań dla potencjalnego atakującego, co znacząco zwiększa czas potrzebny do złamania hasła metodą bruteforce. Warto zauważyć, że wzrost długości hasła powinien być równoważony z wyborem silnego algorytmu haszującego, aby zapewnić optymalne bezpieczeństwo.
+
+Liczba iteracji, zwłaszcza w przypadku algorytmu B-Crypt, jest kolejnym istotnym parametrem. Zwiększenie liczby iteracji zwiększa czas potrzebny do wygenerowania skrótu hasła, co utrudnia atakującemu skuteczne przeprowadzenie ataku brute-force. Jednak zbyt duża liczba iteracji może również wpłynąć na wydajność systemu, dlatego istotne jest znalezienie odpowiedniego balansu między bezpieczeństwem a wydajnością.
+
+\section{Wnioski}
+Analizując omawiane algorytmy haszowania oraz ich zastosowania, można dojść do wniosku, że wybór odpowiedniego algorytmu i parametrów haszowania ma kluczowe znaczenie dla bezpieczeństwa danych w systemach informatycznych. W przypadku systemów przechowujących poufne dane, szczególnie ważne jest stosowanie nowoczesnych algorytmów haszujących o wysokim stopniu odporności na ataki, takich jak SHA-256 czy B-Crypt. Jednocześnie należy pamiętać o ciągłym monitorowaniu nowych zagrożeń i aktualizacji zabezpieczeń, aby zapewnić ochronę danych przed coraz bardziej zaawansowanymi atakami.
+
+Współpraca międzyinstytucjonalna oraz zastosowanie standardów bezpieczeństwa, takich jak ISO IEC 27001, są kluczowe dla zapewnienia spójności i wysokiego poziomu bezpieczeństwa w różnych systemach informatycznych. W miarę rozwoju technologicznego i ewolucji zagrożeń cybernetycznych, istotne jest również ciągłe badanie i rozwijanie nowych technik kryptograficznych, aby zapewnić skuteczną ochronę danych w erze cyfrowej.
+
+\section{Referencje}
+Dodatkowe informacje i źródła:
+\begin{itemize}
+\item Dokumentacja NIST dotycząca algorytmów kryptograficznych:
+\item https://www.nist.gov/publications/search?k=cryptographic+algorithms
+\item ISO/IEC 27001: Standard dotyczący zarządzania bezpieczeństwem informacji.
+\end{itemize}
+
+\end{document}
