@@ -1,17 +1,37 @@
 def is_alphanumeric(char):
     return ('a' <= char <= 'z') or ('A' <= char <= 'Z') or ('0' <= char <= '9') or (char in 'ąćęłńóśźżĄĆĘŁŃÓŚŹŻ')
 
+def normalize_token(token):
+    # Normalizacja na małe litery
+    # ord(char) zwraca kod ASCII dla znaku. Dodajemy do niego 32 (różnica między kodami ASCII dla wielkiej i małej litery), a następnie używamy chr() do konwersji kodu ASCII z powrotem na znak.
+    normalized_token = ''
+    for char in token:
+        if 'A' <= char <= 'Z':
+            normalized_token += chr(ord(char) + 32)  # Zamiana dużej litery na małą literę 
+        elif char in 'ĄĆĘŁŃÓŚŹŻ':
+            normalized_token += chr(ord(char) + 32)  # Zamiana dużej litery diakrytycznej na małą literę
+        else:
+            normalized_token += char
+
+    # Usunięcie diakrytyków
+    normalized_token = normalized_token.replace('ą', 'a').replace('ć', 'c').replace('ę', 'e').replace('ł', 'l').replace('ń', 'n').replace('ó', 'o').replace('ś', 's').replace('ź', 'z').replace('ż', 'z')
+    normalized_token = normalized_token.replace('Ą', 'A').replace('Ć', 'C').replace('Ę', 'E').replace('Ł', 'L').replace('Ń', 'N').replace('Ó', 'O').replace('Ś', 'S').replace('Ź', 'Z').replace('Ż', 'Z')
+
+    return normalized_token
+
+
 def tokenize_words(text):
-    word = ''       #Zmienna word przechowuje aktualnie analizowane słowo
-    tokens = []     #Pusta lista tokens, która będzie przechowywać tokeny.
+    word = ''       # Zmienna word przechowuje aktualnie analizowane słowo
+    tokens = []     # Pusta lista tokens, która będzie przechowywać tokeny
     for char in text:
-        if is_alphanumeric(char):  #Tą funkcją sprawdzamy czy znak jest alfanumeryczny
+        if is_alphanumeric(char):  # Tą funkcją sprawdzamy czy znak jest alfanumeryczny
             word += char
-        elif word:
-            tokens.append(word) #Dodajemy słowo do listy
-            word = ''
+        else:
+            if word:  # Dodajemy słowo tylko jeśli nie jest puste
+                tokens.append(normalize_token(word)) # Dodajemy znormalizowane słowo do listy/ Wywołujemy funkcję normalize_token
+                word = ''  # Resetujemy zmienną word
     if word:
-        tokens.append(word)
+        tokens.append(normalize_token(word))
     return tokens
 
 # Przykładowe użycie
